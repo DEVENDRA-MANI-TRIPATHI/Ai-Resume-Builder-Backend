@@ -5,12 +5,7 @@ dotenv.config(); // Load API key from .env file
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/**
- * Analyzes a resume against a job description using Gemini AI.
- * @param {string} resumeText - The resume content.
- * @param {string} jobDescription - The job description to compare against.
- * @returns {Promise<object>} - Structured AI response with ATS score, missing keywords, and suggestions.
- */
+
 export const analyzeResume = async (resumeText, jobDescription) => {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -44,5 +39,41 @@ export const analyzeResume = async (resumeText, jobDescription) => {
     } catch (error) {
         console.error("❌ Gemini API Error:", error.message);
         return { error: "Error processing your request." };
+    }
+};
+
+export const generateCoverLetter = async (
+    resumeText,
+    jobDescription,
+    companyName = "the company",
+    recipientName = "Hiring Manager"
+) => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+            Write a professional and compelling cover letter for a software engineering position.
+            Use the following details:
+            - The cover letter should be tailored to the job description.
+            - Address it to ${recipientName} at ${companyName}.
+            - Highlight key skills, relevant experience, and enthusiasm for the role.
+            - Use a formal and engaging tone.
+            - Keep it concise (about 250-300 words).
+            - End with a polite closing statement and a call to action.
+            
+            ### Resume:
+            ${resumeText}
+
+            ### Job Description:
+            ${jobDescription}
+
+            Respond with the cover letter only, without any additional text.
+        `;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+    } catch (error) {
+        console.error("❌ Gemini API Error:", error.message);
+        return "Error generating the cover letter.";
     }
 };
